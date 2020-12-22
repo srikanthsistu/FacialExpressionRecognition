@@ -4,6 +4,12 @@ import os
 import sys
 import cv2
 import glog as log
+import torch
+from torch.utils.data import Dataset, DataLoader
+from torchvision import datasets
+import torchvision.transforms as transforms
+import torchvision
+import matplotlib.pyplot as plt
 
 
 def convert_csv_to_image(output_path, input_path=""):
@@ -40,8 +46,26 @@ def convert_csv_to_image(output_path, input_path=""):
         cv2.imwrite(img_path, img)
 
 
-out_path = os.path.join(os.getcwd(), "data/images")
-inp_path = os.path.join(os.getcwd(), "data/fer2013/fer2013.csv")
-log.info("Input path is {}".format(inp_path))
+def create_data_loader():
+    transform = transforms.ToTensor() # TODO Add better transforms
+    train_data = datasets.ImageFolder(os.path.join(os.getcwd(), "data/images/publictest"), transform)
+    train_loader = DataLoader(train_data, batch_size=16, shuffle=True)
+    for idx, (images, targets) in enumerate(train_loader):
+        if idx == 0:
+            img = torchvision.utils.make_grid(images)
+            npimg = img.numpy()
+            plt.imshow(np.transpose(npimg, (1, 2, 0)))
+            plt.savefig("first_batch.png")
 
-convert_csv_to_image(out_path, inp_path)
+
+def main():
+    out_path = os.path.join(os.getcwd(), "data/images")
+    inp_path = os.path.join(os.getcwd(), "data/fer2013/fer2013.csv")
+    log.info("Input path is {}".format(inp_path))
+    if len(os.listdir(out_path)) == 0:
+        convert_csv_to_image(out_path, inp_path)
+    create_data_loader()
+
+
+if __name__ == '__main__':
+    main()
